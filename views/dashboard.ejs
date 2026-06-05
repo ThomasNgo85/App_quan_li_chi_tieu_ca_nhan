@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SpendWise - Tổng quan</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+    <button id="alertBtn" class="floating-btn alert-btn">
+        <i class="bi bi-bell-fill"></i>
+    </button>
+
+    <button id="addTransactionBtn" class="floating-btn add-transaction-btn">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+
+<div class="d-flex">
+
+    <div class="sidebar p-3">
+        <h4 class="logo-title">
+            SpendWise
+        </h4>
+        <hr>
+
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/">
+                    <i class="bi bi-speedometer2"></i> Tổng quan
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/transactions">
+                    <i class="bi bi-wallet2"></i> Giao dịch
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/budgets">
+                    <i class="bi bi-cash-stack"></i> Ngân sách
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/reports">
+                    <i class="bi bi-bar-chart"></i> Báo cáo
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="content p-4">
+
+        <h2>Tổng quan</h2>
+        <p class="text-muted">Hệ thống quản lý và cảnh báo chi tiêu cá nhân</p>
+
+        <div class="row mt-4">
+
+            <div class="col-md-3">
+                <div class="card dashboard-card" ondblclick="window.location.href='/reports'">
+                    <div class="card-body">
+                        <h6>Tổng chi tiêu</h6>
+                        <h4><%= Number(totalExpense).toLocaleString() %> VNĐ</h4>
+                        <small>Nhấp đúp để xem báo cáo</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dashboard-card" ondblclick="window.location.href='/budgets'">
+                    <div class="card-body">
+                        <h6>Tổng ngân sách</h6>
+                        <h4><%= Number(totalBudget).toLocaleString() %> VNĐ</h4>
+                        <small>Nhấp đúp để chỉnh ngân sách</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dashboard-card" ondblclick="window.location.href='/transactions'">
+                    <div class="card-body">
+                        <h6>Số giao dịch</h6>
+                        <h4><%= totalTransactions %></h4>
+                        <small>Nhấp đúp để xem giao dịch</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card dashboard-card" ondblclick="window.location.href='/reports'">
+                    <div class="card-body">
+                        <h6>Danh mục</h6>
+                        <h4><%= totalCategories %></h4>
+                        <small>Nhấp đúp để xem thống kê</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row mt-4">
+
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <div class="card-body">
+                        <h5 id="pieTitle">Chi tiêu theo danh mục</h5>
+
+                            <div id="defaultPieBox" class="default-pie-box">
+                                <div class="default-pie-chart">
+                                    <canvas id="pieChart"></canvas>
+                                </div>
+
+                                <div id="defaultPieLegend" class="default-pie-legend"></div>
+                            </div>
+
+<div id="selectedPieBox" class="selected-pie-box d-none">
+
+    <canvas id="pieLeaderLines"></canvas>
+
+    <div class="selected-pie-chart">
+        <canvas id="selectedPieChart"></canvas>
+    </div>
+
+    <div id="pieFloatingLabels"></div>
+
+</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <div class="card-body">
+                        <h5>Chi tiêu theo tháng</h5>
+
+                        <div id="comparisonBox" class="comparison-box">
+                            Bấm vào một cột để xem so sánh với tháng trước.
+                        </div>
+
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="alertPopup" class="alert-popup">
+
+    <div class="alert-header">
+        Cảnh báo chi tiêu
+    </div>
+
+    <ul>
+        <% if(alerts.length === 0) { %>
+            <li>Không có cảnh báo.</li>
+        <% } %>
+
+        <% alerts.forEach(alert => { %>
+
+            <%
+                let categoryName = alert.name;
+        
+                if(categoryName === "Food")
+                    categoryName = "Ăn uống";
+        
+                else if(categoryName === "Entertainment")
+                    categoryName = "Giải trí";
+        
+                else if(categoryName === "Transport")
+                    categoryName = "Di chuyển";
+        
+                else if(categoryName === "Shopping")
+                    categoryName = "Mua sắm";
+        
+                const overAmount =
+                    Number(alert.spent) - Number(alert.limit_amount);
+            %>
+        
+            <li>
+        
+                <strong><%= categoryName %></strong>
+        
+                đã chi
+        
+                <span>
+                    <strong>
+                        <%= Number(alert.spent).toLocaleString('vi-VN') %> VNĐ
+                    </strong>
+                </span>
+        
+                <br>
+        
+                vượt
+        
+                <span class="spent-money">
+                    <strong>
+                        <%= overAmount.toLocaleString('vi-VN') %> VNĐ
+                    </strong>
+                </span>
+        
+                so với
+        
+                <strong>Ngân sách:</strong>
+        
+                <span class="budget-money">
+                    <strong>
+                        <%= Number(alert.limit_amount).toLocaleString('vi-VN') %> VNĐ
+                    </strong>
+                </span>
+        
+            </li>
+        
+        <% }) %>
+    </ul>
+
+</div>
+
+<div id="addTransactionPopup" class="modal-overlay">
+
+    <div class="transaction-modal">
+
+        <h4>Thêm giao dịch</h4>
+
+        <form action="/transactions/add" method="POST">
+
+            <div class="mb-3">
+                <label>Danh mục</label>
+
+                <select name="category_id" class="form-control" required>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category.id %>">
+                            <% if (category.name === 'Food') { %>
+                                Ăn uống
+                            <% } else if (category.name === 'Entertainment') { %>
+                                Giải trí
+                            <% } else if (category.name === 'Transport') { %>
+                                Di chuyển
+                            <% } else if (category.name === 'Shopping') { %>
+                                Mua sắm
+                            <% } else { %>
+                                Khác
+                            <% } %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label>Số tiền</label>
+                <input type="number" name="amount" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Ghi chú</label>
+                <input type="text" name="note" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label>Ngày giao dịch</label>
+                <input type="date" name="transaction_date" class="form-control" required>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" id="closeAddPopup" class="btn btn-secondary">
+                    Hủy
+                </button>
+
+                <button class="btn btn-primary">
+                    Thêm
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const pieLabels = <%- JSON.stringify(pieLabels || []) %>;
+const pieData = <%- JSON.stringify(pieData || []) %>;
+
+const monthlyLabels = <%- JSON.stringify(monthlyLabels || []) %>;
+const monthlyData = <%- JSON.stringify(monthlyData || []) %>;
+
+const monthlyCategoryData = <%- JSON.stringify(monthlyCategoryData || []) %>;
+
+function translateCategory(name) {
+    if (name === "Food") return "Ăn uống";
+    if (name === "Entertainment") return "Giải trí";
+    if (name === "Transport") return "Di chuyển";
+    if (name === "Shopping") return "Mua sắm";
+    return "Khác";
+}
+
+function formatMonth(monthText) {
+    const parts = monthText.split("-");
+    return "Tháng " + Number(parts[1]) + " năm " + parts[0];
+}
+
+const categoryColors = {
+    Food: "#ff6384",
+    Entertainment: "#8b5cf6",
+    Transport: "#36cfc9",
+    Shopping: "#ff9f40",
+    Other: "#adb5bd"
+};
+
+function getCategoryColor(name) {
+    return categoryColors[name] || categoryColors.Other;
+}
+
+function getColors(labels) {
+    return labels.map(label => getCategoryColor(label));
+}
+
+function renderDefaultLegend(labels, data) {
+    const legend = document.getElementById("defaultPieLegend");
+    const total = data.reduce((sum, value) => sum + Number(value), 0);
+
+    legend.innerHTML = "";
+
+    labels.forEach((label, index) => {
+        const value = Number(data[index]);
+        const percent = total === 0 ? 0 : ((value / total) * 100).toFixed(1);
+        const color = getCategoryColor(label);
+
+        legend.innerHTML += `
+            <div class="default-legend-item">
+                <span class="default-legend-dot" style="background:${color}"></span>
+                <span>${translateCategory(label)} (${percent}%)</span>
+            </div>
+        `;
+    });
+}
+
+const defaultPieChart = new Chart(document.getElementById("pieChart"), {
+    type: "doughnut",
+    animation: false,
+    data: {
+        labels: pieLabels,
+        datasets: [{
+            data: pieData,
+            backgroundColor: getColors(pieLabels),
+            borderWidth: 5,
+            spacing: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "62%",
+        animation: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+renderDefaultLegend(pieLabels, pieData);
+
+const selectedPieChart = new Chart(document.getElementById("selectedPieChart"), {
+    type: "doughnut",
+    animation: false,
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            backgroundColor: [],
+            borderWidth: 5,
+            spacing: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "62%",
+        animation: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+function drawLeaderLabels(labels, data) {
+    const wrapper = document.getElementById("selectedPieBox");
+    const canvas = document.getElementById("pieLeaderLines");
+    const labelBox = document.getElementById("pieFloatingLabels");
+
+    const rect = wrapper.getBoundingClientRect();
+
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    labelBox.innerHTML = "";
+
+    const total = data.reduce((sum, value) => sum + Number(value), 0);
+
+    const centerX = rect.width / 2 ;
+    const centerY = rect.height / 2 + 15;
+
+    const radius = 120;
+    let startAngle = -Math.PI / 2;
+
+    labels.forEach((label, index) => {
+        const value = Number(data[index]);
+        const ratio = total === 0 ? 0 : value / total;
+
+        const midAngle = startAngle + ratio * Math.PI;
+
+        const startX = centerX + Math.cos(midAngle) * radius;
+        const startY = centerY + Math.sin(midAngle) * radius;
+
+        const side = Math.cos(midAngle) >= 0 ? "right" : "left";
+
+        const bendX = centerX + Math.cos(midAngle) * 150;
+        const bendY = centerY + Math.sin(midAngle) * 150;
+
+        const endX = side === "right"
+            ? centerX + 235
+            : centerX - 235;
+
+        const endY = bendY;
+
+        const labelX = side === "right"
+            ? endX + 8
+            : endX - 115;
+
+        const labelY = endY - 24;
+
+        const color = getCategoryColor(label);
+
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(bendX, bendY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(startX, startY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        const percent = total === 0
+            ? "0%"
+            : ((value / total) * 100).toFixed(1) + "%";
+
+        labelBox.innerHTML += `
+            <div class="pie-floating-label" style="left:${labelX}px; top:${labelY}px;">
+                <span class="percent" style="color:${color}">
+                    ${percent}
+                </span>
+                <span class="category">${translateCategory(label)}</span>
+            </div>
+        `;
+
+        startAngle += ratio * Math.PI * 2;
+    });
+}
+
+let selectedBarIndex = null;
+
+const barCanvas = document.getElementById("barChart");
+
+const barChart = new Chart(barCanvas, {
+    type: "bar",
+    data: {
+        labels: monthlyLabels.map(formatMonth),
+        datasets: [{
+            label: "Tổng chi tiêu",
+            data: monthlyData,
+            backgroundColor: monthlyData.map(() => "#4f8df7"),
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        events: ["mousemove", "mouseout", "click", "touchstart", "touchmove"],
+
+        interaction: {
+            mode: "nearest",
+            intersect: true
+        },
+
+        onHover: (event, activeElements, chart) => {
+            const dataset = chart.data.datasets[0];
+
+            if (activeElements.length > 0) {
+                dataset.backgroundColor =
+                    monthlyData.map(() => "rgba(79,141,247,0.25)");
+
+                const hoverIndex = activeElements[0].index;
+                dataset.backgroundColor[hoverIndex] = "#2563eb";
+
+            } else if (selectedBarIndex !== null) {
+                dataset.backgroundColor =
+                    monthlyData.map(() => "rgba(79,141,247,0.25)");
+
+                dataset.backgroundColor[selectedBarIndex] = "#2563eb";
+
+            } else {
+                dataset.backgroundColor =
+                    monthlyData.map(() => "#4f8df7");
+            }
+
+            chart.update("none");
+        },
+
+        onClick: function(event, elements) {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+
+                selectedBarIndex = index;
+
+                this.data.datasets[0].backgroundColor =
+                    monthlyData.map(() => "rgba(79,141,247,0.25)");
+
+                this.data.datasets[0].backgroundColor[selectedBarIndex] = "#2563eb";
+
+                this.update("none");
+
+                const currentMonth = monthlyLabels[index];
+                const currentMonthText = formatMonth(currentMonth);
+
+                const currentValue = Number(monthlyData[index]);
+                const previousValue =
+                    index > 0 ? Number(monthlyData[index - 1]) : null;
+
+                const box = document.getElementById("comparisonBox");
+
+                if (previousValue === null) {
+                    box.innerHTML =
+                        currentMonthText + ": " +
+                        currentValue.toLocaleString() +
+                        " VNĐ. Chưa có tháng trước để so sánh.";
+                } else {
+                    const difference = currentValue - previousValue;
+                    const percent = previousValue === 0
+                        ? 0
+                        : ((difference / previousValue) * 100).toFixed(1);
+
+                    if (difference >= 0) {
+                        box.innerHTML =
+                            currentMonthText +
+                            " tăng " + difference.toLocaleString() +
+                            " VNĐ, tương đương " + percent +
+                            "% so với tháng trước.";
+                    } else {
+                        box.innerHTML =
+                            currentMonthText +
+                            " giảm " + Math.abs(difference).toLocaleString() +
+                            " VNĐ, tương đương " + Math.abs(percent) +
+                            "% so với tháng trước.";
+                    }
+                }
+
+                const selectedMonthData = monthlyCategoryData.filter(
+                    item => item.month === currentMonth
+                );
+
+                const newLabels =
+                    selectedMonthData.map(item => item.category_name);
+
+                const newData =
+                    selectedMonthData.map(item => Number(item.total));
+
+                document
+                    .getElementById("defaultPieBox")
+                    .classList.add("d-none");
+
+                document
+                    .getElementById("selectedPieBox")
+                    .classList.remove("d-none");
+
+                selectedPieChart.data.labels = newLabels;
+                selectedPieChart.data.datasets[0].data = newData;
+                selectedPieChart.data.datasets[0].backgroundColor =
+                    getColors(newLabels);
+
+                selectedPieChart.update("none");
+
+                document.getElementById("pieTitle").innerHTML =
+                    "Chi tiêu theo danh mục - " + currentMonthText;
+
+                setTimeout(() => {
+                    drawLeaderLabels(newLabels, newData);
+                }, 80);
+            }
+        },
+
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+barCanvas.addEventListener("mouseleave", () => {
+    if (selectedBarIndex !== null) {
+        barChart.data.datasets[0].backgroundColor =
+            monthlyData.map(() => "rgba(79,141,247,0.25)");
+
+        barChart.data.datasets[0].backgroundColor[selectedBarIndex] = "#2563eb";
+    } else {
+        barChart.data.datasets[0].backgroundColor =
+            monthlyData.map(() => "#4f8df7");
+    }
+
+    barChart.update("none");
+});
+
+window.addEventListener("resize", () => {
+    const selectedPieBox =
+        document.getElementById("selectedPieBox");
+
+    if (!selectedPieBox.classList.contains("d-none")) {
+        drawLeaderLabels(
+            selectedPieChart.data.labels,
+            selectedPieChart.data.datasets[0].data
+        );
+    }
+});
+
+const alertBtn = document.getElementById("alertBtn");
+const alertPopup = document.getElementById("alertPopup");
+
+alertBtn.addEventListener("click", () => {
+    alertPopup.style.display =
+        alertPopup.style.display === "block" ? "none" : "block";
+});
+
+document.addEventListener("click", (event) => {
+    if (
+        !alertPopup.contains(event.target) &&
+        !alertBtn.contains(event.target)
+    ) {
+        alertPopup.style.display = "none";
+    }
+});
+
+alertPopup.addEventListener("mouseleave", () => {
+    alertPopup.style.display = "none";
+});
+
+const addTransactionBtn = document.getElementById("addTransactionBtn");
+const addTransactionPopup = document.getElementById("addTransactionPopup");
+const closeAddPopup = document.getElementById("closeAddPopup");
+
+addTransactionBtn.addEventListener("click", () => {
+    addTransactionPopup.style.display = "flex";
+});
+
+closeAddPopup.addEventListener("click", () => {
+    addTransactionPopup.style.display = "none";
+});
+
+addTransactionPopup.addEventListener("click", (event) => {
+    if (event.target === addTransactionPopup) {
+        addTransactionPopup.style.display = "none";
+    }
+});
+</script>
+
+</body>
+</html>
